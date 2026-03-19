@@ -1,29 +1,23 @@
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const path = require("path");
-const app = express();
 require("dotenv").config();
-let dbConnect = require("./dbConnect");
+const http = require("http");
+const sequelize = require("./config/db");
+const app = require("./app");
 
-// parse requests of content-type - application/json
+const { initSockets } = require("./sockets/socketHandler");
 
-app.use(helmet());
-app.use(cors());
-app.use(express.json());
-app.use("./uploads", express.static(path.join(_dirname, "uploads")));
+const PORT = process.env.PORT || 4000;
 
-// routes
+(async () => {
+  try {
+    await sequelize.authenticate();
+    await sequelize.sync(); // dev-friendly; for capstone you can mention migrations as future improvement
 
-app.get("/", (req, res) => {
-  res.json({ message: "Welcome to my DONaid Application." });
-});
-app.get("/health", (req, res) => {
-  res.json({ ok: true });
-});
+    const server = http.createServer(app);
+    initSockets(server);
 
-// setting port, listening for requests
-const PORT = process.env.PORT || 8888;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}.`);
-});
+    server.listen(PORT, () => console.log(`Server running on ${PORT}`));
+  } catch (e) {
+    console.error("Failed to start:", e);
+    process.exit(1);
+  }
+})();

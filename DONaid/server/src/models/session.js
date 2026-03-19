@@ -1,5 +1,5 @@
 const { DataTypes, Model } = require("sequelize");
-let dbConnect = require("../config/dbConnect");
+let dbConnect = require("../config/db");
 const sequelizeInstance = dbConnect.Sequelize;
 
 // creating the session class
