@@ -1,31 +1,17 @@
-const { DataTypes, Model } = require("sequelize");
-let dbConnect = require("../config/db");
-const sequelizeInstance = dbConnect.Sequelize;
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/db");
 
-// creating the session class
-class Session extends Model {}
-
-Session.init(
+const Session = sequelize.define(
+  "Session",
   {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
-      allowNull: false,
-      autoIncrement: true,
-      primaryKey: true, // PRIMARY KEY
+      primaryKey: true,
     },
-    expiresAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
+    expiresAt: { type: DataTypes.DATE, allowNull: false },
   },
-  {
-    sequelize: sequelizeInstance,
-    modelName: "sessions",
-    timestamps: true,
-    freezeTableName: true,
-  },
+  { timestamps: true },
 );
 
-//exporting session model
 module.exports = Session;

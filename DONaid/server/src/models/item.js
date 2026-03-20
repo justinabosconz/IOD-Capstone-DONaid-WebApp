@@ -1,47 +1,21 @@
-const { DataTypes, Model } = require("sequelize");
-let dbConnect = require("../config/db");
-const sequelizeInstance = dbConnect.Sequelize;
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/db");
 
-// creating the item class
-class Item extends Model {}
-
-Item.init(
+const Item = sequelize.define(
+  "Item",
   {
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      autoIncrement: true,
-      primaryKey: true, // PRIMARY KEY
-    },
-    title: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    description: {
-      type: DataTypes.STRING,
-    },
-    category: {
-      type: DataTypes.STRING,
-    },
-    condition: {
-      type: DataTypes.STRING,
-    },
-    imageUrl: {
-      type: DataTypes.STRING,
-    },
+    title: { type: DataTypes.STRING(120), allowNull: false },
+    description: { type: DataTypes.STRING(1000) },
+    category: { type: DataTypes.STRING(60) },
+    condition: { type: DataTypes.STRING(60) },
+    imageUrl: { type: DataTypes.STRING(400) },
     status: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(20),
       allowNull: false,
-      defaultValue: "AVAIALBLE",
+      defaultValue: "AVAILABLE",
     },
   },
-  {
-    sequelize: sequelizeInstance,
-    modelName: "items",
-    timestamps: true,
-    freezeTableName: true,
-  },
+  { timestamps: true },
 );
 
-//exporting item model
 module.exports = Item;

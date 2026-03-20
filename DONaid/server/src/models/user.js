@@ -1,42 +1,14 @@
-const { DataTypes, Model } = require("sequelize");
-let dbConnect = require("../config/db");
-const sequelizeInstance = dbConnect.Sequelize;
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/db");
 
-// creating the user class
-class User extends Model {}
-
-User.init(
+const User = sequelize.define(
+  "User",
   {
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      autoIncrement: true,
-      primaryKey: true, // PRIMARY KEY
-    },
-    firstName: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    lastName: {
-      type: DataTypes.STRING,
-    },
-    emailId: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-    },
-    password: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
+    displayName: { type: DataTypes.STRING(80), allowNull: false },
+    email: { type: DataTypes.STRING(120), allowNull: false, unique: true },
+    passwordHash: { type: DataTypes.STRING(255), allowNull: false },
   },
-  {
-    sequelize: sequelizeInstance,
-    modelName: "users",
-    timestamps: true,
-    freezeTableName: true,
-  },
+  { timestamps: true },
 );
 
-//exporting user model
 module.exports = User;

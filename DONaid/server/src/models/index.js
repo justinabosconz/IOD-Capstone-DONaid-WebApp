@@ -1,10 +1,10 @@
-const User = require("../models/user");
-const Item = require("../models/item");
-const Chat = require("../models/chat");
-const Message = require("../models/message");
-const Session = require("../models/session");
+const User = require("./user");
+const Item = require("./item");
+const Chat = require("./chat");
+const Message = require("./message");
+const Session = require("./session");
 
-// Users connected to Items
+// Users <-> Items
 User.hasMany(Item, { foreignKey: "ownerUserId" });
 Item.belongsTo(User, { foreignKey: "ownerUserId", as: "owner" });
 
@@ -26,5 +26,4 @@ Message.belongsTo(Chat, { foreignKey: "chatId" });
 User.hasMany(Message, { foreignKey: "senderUserId" });
 Message.belongsTo(User, { foreignKey: "senderUserId", as: "sender" });
 
-// Exporting
 module.exports = { User, Item, Chat, Message, Session };

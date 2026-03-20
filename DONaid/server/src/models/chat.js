@@ -1,19 +1,12 @@
-const { DataTypes, Model } = require("sequelize");
-let dbConnect = require("../config/db");
-const sequelizeInstance = dbConnect.Sequelize;
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/db");
 
-// creating the chat class
-class Chat extends Model {}
-
-Chat.init(
-  {},
+const Chat = sequelize.define(
+  "Chat",
   {
-    sequelize: sequelizeInstance,
-    modelName: "chats",
-    timestamps: true,
-    freezeTableName: true,
+    // itemId, userAId, userBId will be associated
   },
+  { timestamps: true },
 );
 
-//exporting chat model
 module.exports = Chat;
