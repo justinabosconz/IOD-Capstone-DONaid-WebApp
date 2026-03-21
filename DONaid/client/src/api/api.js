@@ -11,6 +11,9 @@ export async function apiFetch(path, { token, method = "GET", body } = {}) {
   });
 
   const data = await res.json().catch(() => ({}));
+  if (res.status === 401) {
+    localStorage.removeItem("token");
+  }
   if (!res.ok) throw new Error(data.message || "Request failed");
   return data;
 }

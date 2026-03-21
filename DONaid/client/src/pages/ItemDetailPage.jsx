@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Container,
@@ -15,6 +15,7 @@ import {
   TextField,
   MenuItem,
 } from "@mui/material";
+
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
@@ -44,10 +45,19 @@ export default function ItemDetailPage({ itemId, onBack }) {
     status: "AVAILABLE",
   });
 
+  // ✅ Anchor at top of the page (we will scroll to this with an offset)
+  const topRef = useRef(null);
+
+  // ✅ Load item data
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       try {
+        setErr("");
         const data = await api.getItem(itemId);
+        if (cancelled) return;
+
         setItem(data);
         setForm({
           title: data.title || "",
@@ -57,19 +67,54 @@ export default function ItemDetailPage({ itemId, onBack }) {
           status: data.status || "AVAILABLE",
         });
       } catch (e) {
-        setErr(e.message);
+        if (!cancelled) setErr(e.message);
       }
     }
+
     load();
+    return () => {
+      cancelled = true;
+    };
   }, [itemId]);
 
+  // ✅ Bulletproof scroll: always bring the top (Back button) into view
+  //    while accounting for sticky AppBar height.
+  useEffect(() => {
+    // Run after render
+    const t = setTimeout(() => {
+      const topEl = topRef.current;
+      if (!topEl) return;
+
+      // Find MUI AppBar <header> (sticky)
+      const header = document.querySelector("header.MuiAppBar-root");
+      const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+
+      // Add extra padding so Back button is comfortably visible
+      const extraPadding = 20;
+      const offset = headerBottom + extraPadding;
+
+      const y = topEl.getBoundingClientRect().top + window.scrollY - offset;
+
+      window.scrollTo({
+        top: Math.max(0, y),
+        left: 0,
+        behavior: "smooth", // ✅ correct spelling
+      });
+    }, 60);
+
+    return () => clearTimeout(t);
+  }, [itemId]);
+
+  // ✅ Owner check (only owners can edit/delete)
   const isOwner = useMemo(() => {
     return item?.owner?.id && user?.id && item.owner.id === user.id;
   }, [item, user]);
 
   async function onSave() {
+    if (!item) return;
     setSaving(true);
     try {
+      setErr("");
       const updated = await updateItem(item.id, form);
       setItem((prev) => ({ ...prev, ...updated }));
       setOpenEdit(false);
@@ -81,8 +126,11 @@ export default function ItemDetailPage({ itemId, onBack }) {
   }
 
   async function onDelete() {
+    if (!item) return;
     if (!window.confirm("Delete this item? This cannot be undone.")) return;
+
     try {
+      setErr("");
       await deleteItem(item.id);
       onBack();
     } catch (e) {
@@ -90,6 +138,7 @@ export default function ItemDetailPage({ itemId, onBack }) {
     }
   }
 
+  // Error state
   if (err && !item) {
     return (
       <Box sx={{ py: 3 }}>
@@ -115,14 +164,18 @@ export default function ItemDetailPage({ itemId, onBack }) {
     );
   }
 
-  if (!item)
+  // Loading state
+  if (!item) {
     return (
       <Box sx={{ py: 3 }}>
         <Container maxWidth="md">
-          <Typography>Loading...</Typography>
+          <Paper variant="outlined" sx={{ p: 3 }}>
+            <Typography color="text.secondary">Loading…</Typography>
+          </Paper>
         </Container>
       </Box>
     );
+  }
 
   const imgSrc = item.imagePath
     ? `http://localhost:4000/uploads/${item.imagePath}`
@@ -130,8 +183,11 @@ export default function ItemDetailPage({ itemId, onBack }) {
 
   return (
     <Box sx={{ py: 3 }}>
-      <Container maxWidth="md">
-        <Stack direction="row" spacing={1} alignItems="center">
+      {/* ✅ Top anchor so we always scroll to where buttons are visible */}
+      <div ref={topRef} />
+
+      <Container maxWidth="md" sx={{ pt: 1 }}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
           <Button
             variant="outlined"
             onClick={onBack}
@@ -142,7 +198,6 @@ export default function ItemDetailPage({ itemId, onBack }) {
 
           <Box sx={{ flex: 1 }} />
 
-          {/* ✅ Only show Edit/Delete if current user is owner */}
           {isOwner && (
             <>
               <Button
@@ -164,7 +219,7 @@ export default function ItemDetailPage({ itemId, onBack }) {
           )}
         </Stack>
 
-        <Paper variant="outlined" sx={{ p: 3, mt: 2 }}>
+        <Paper variant="outlined" sx={{ p: 3 }}>
           {imgSrc && (
             <Box
               component="img"
@@ -243,6 +298,7 @@ export default function ItemDetailPage({ itemId, onBack }) {
         maxWidth="sm"
       >
         <DialogTitle>Edit item</DialogTitle>
+
         <DialogContent sx={{ pt: 1 }}>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
@@ -252,6 +308,7 @@ export default function ItemDetailPage({ itemId, onBack }) {
                 setForm((p) => ({ ...p, title: e.target.value }))
               }
             />
+
             <TextField
               label="Description"
               value={form.description}
@@ -261,6 +318,7 @@ export default function ItemDetailPage({ itemId, onBack }) {
                 setForm((p) => ({ ...p, description: e.target.value }))
               }
             />
+
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
               <TextField
                 fullWidth
@@ -279,6 +337,7 @@ export default function ItemDetailPage({ itemId, onBack }) {
                 }
               />
             </Stack>
+
             <TextField
               select
               label="Status"
@@ -292,6 +351,7 @@ export default function ItemDetailPage({ itemId, onBack }) {
             </TextField>
           </Stack>
         </DialogContent>
+
         <DialogActions>
           <Button variant="outlined" onClick={() => setOpenEdit(false)}>
             Cancel

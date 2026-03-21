@@ -20,6 +20,7 @@ export default function ChatBox({ itemId }) {
   const [messages, setMessages] = useState([]);
   const [body, setBody] = useState("");
   const bottomRef = useRef(null);
+  const didInitScroll = useRef(false);
 
   useEffect(() => {
     async function load() {
@@ -45,7 +46,14 @@ export default function ChatBox({ itemId }) {
   }, [socket, itemId]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!didInitScroll.current) {
+      didInitScroll.current = true;
+      return;
+    }
+  });
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages]);
 
   function send() {

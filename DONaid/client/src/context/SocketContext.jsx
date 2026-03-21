@@ -15,18 +15,21 @@ export function SocketProvider({ children }) {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    if (!token) {
-      if (socket) socket.disconnect();
+    // ✅ Always disconnect previous socket when token changes
+    if (socket) {
+      socket.disconnect();
       setSocket(null);
-      return;
     }
 
+    if (!token) return;
+
     const s = io("http://localhost:4000", {
-      auth: { token }, // handshake auth
+      auth: { token }, // ✅ new token used here
     });
 
     setSocket(s);
     return () => s.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const value = useMemo(() => ({ socket }), [socket]);
