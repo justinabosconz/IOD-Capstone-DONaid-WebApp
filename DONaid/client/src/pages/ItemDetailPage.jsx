@@ -1,170 +1,311 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, Link as RouterLink } from "react-router-dom";
 import {
   Box,
-  Button,
-  Card,
-  CardContent,
-  CardMedia,
-  Chip,
-  Divider,
-  Stack,
+  Container,
+  Paper,
   Typography,
-  Alert,
+  Button,
+  Chip,
+  Stack,
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
 } from "@mui/material";
-import ChatIcon from "@mui/icons-material/Chat";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
+import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 
-import { itemApi } from "../api/itemApi";
-import { chatApi } from "../api/chatApi";
+import { api } from "../api/api";
 import { useAuth } from "../context/AuthContext";
-import LoadingBlock from "../components/common/LoadingBlock";
-import ConfirmDialog from "../components/common/ConfirmDialog";
+import { useItems } from "../context/ItemsContext";
+import ChatBox from "../components/ChatBox";
 
-const fallback =
-  "https://images.unsplash.com/photo-1520975958225-9f61b40d87b4?auto=format&fit=crop&w=1200&q=60";
-
-export default function ItemDetailPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { user, sessionId } = useAuth();
+export default function ItemDetailPage({ itemId, onBack }) {
+  const { user } = useAuth();
+  const { updateItem, deleteItem } = useItems();
 
   const [item, setItem] = useState(null);
-  const [busy, setBusy] = useState(true);
-  const [error, setError] = useState("");
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [err, setErr] = useState("");
+
+  // Edit dialog state
+  const [openEdit, setOpenEdit] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    category: "",
+    itemCondition: "",
+    status: "AVAILABLE",
+  });
 
   useEffect(() => {
-    let alive = true;
-    setBusy(true);
-    setError("");
-    itemApi
-      .get(id)
-      .then((data) => alive && setItem(data))
-      .catch((e) => alive && setError(e.message))
-      .finally(() => alive && setBusy(false));
-    return () => (alive = false);
-  }, [id]);
+    async function load() {
+      try {
+        const data = await api.getItem(itemId);
+        setItem(data);
+        setForm({
+          title: data.title || "",
+          description: data.description || "",
+          category: data.category || "",
+          itemCondition: data.itemCondition || "",
+          status: data.status || "AVAILABLE",
+        });
+      } catch (e) {
+        setErr(e.message);
+      }
+    }
+    load();
+  }, [itemId]);
 
   const isOwner = useMemo(() => {
-    return user && item && item.ownerUserId === user.id;
-  }, [user, item]);
+    return item?.owner?.id && user?.id && item.owner.id === user.id;
+  }, [item, user]);
 
-  const messageDonor = async () => {
-    if (!user) return navigate("/login", { state: { from: `/items/${id}` } });
-    if (!item?.owner?.id) return;
+  async function onSave() {
+    setSaving(true);
+    try {
+      const updated = await updateItem(item.id, form);
+      setItem((prev) => ({ ...prev, ...updated }));
+      setOpenEdit(false);
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
-    const chat = await chatApi.createOrGet(
-      { itemId: item.id, otherUserId: item.owner.id },
-      sessionId,
+  async function onDelete() {
+    if (!window.confirm("Delete this item? This cannot be undone.")) return;
+    try {
+      await deleteItem(item.id);
+      onBack();
+    } catch (e) {
+      setErr(e.message);
+    }
+  }
+
+  if (err && !item) {
+    return (
+      <Box sx={{ py: 3 }}>
+        <Container maxWidth="md">
+          <Paper variant="outlined" sx={{ p: 3 }}>
+            <Typography sx={{ fontWeight: 900 }}>
+              Could not load item
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {err}
+            </Typography>
+            <Button
+              sx={{ mt: 2 }}
+              variant="outlined"
+              onClick={onBack}
+              startIcon={<ArrowBackRoundedIcon />}
+            >
+              Back
+            </Button>
+          </Paper>
+        </Container>
+      </Box>
     );
-    navigate(`/chats/${chat.id}`);
-  };
+  }
 
-  const deleteItem = async () => {
-    setConfirmOpen(false);
-    await itemApi.remove(item.id, sessionId);
-    navigate("/", { replace: true });
-  };
+  if (!item)
+    return (
+      <Box sx={{ py: 3 }}>
+        <Container maxWidth="md">
+          <Typography>Loading...</Typography>
+        </Container>
+      </Box>
+    );
 
-  if (busy) return <LoadingBlock label="Loading item..." />;
-  if (error) return <Alert severity="error">{error}</Alert>;
-  if (!item) return <Alert severity="warning">Item not found</Alert>;
+  const imgSrc = item.imagePath
+    ? `http://localhost:4000/uploads/${item.imagePath}`
+    : null;
 
   return (
-    <Box>
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        spacing={2}
-        alignItems="stretch"
-      >
-        <Card sx={{ flex: 1 }}>
-          <CardMedia
-            component="img"
-            height="320"
-            image={item.imageUrl || fallback}
-            alt={item.title}
-            sx={{ objectFit: "cover" }}
-          />
-          <CardContent>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="flex-start"
-              gap={1}
+    <Box sx={{ py: 3 }}>
+      <Container maxWidth="md">
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Button
+            variant="outlined"
+            onClick={onBack}
+            startIcon={<ArrowBackRoundedIcon />}
+          >
+            Back
+          </Button>
+
+          <Box sx={{ flex: 1 }} />
+
+          {/* ✅ Only show Edit/Delete if current user is owner */}
+          {isOwner && (
+            <>
+              <Button
+                variant="outlined"
+                startIcon={<EditRoundedIcon />}
+                onClick={() => setOpenEdit(true)}
+              >
+                Edit
+              </Button>
+              <Button
+                color="error"
+                variant="contained"
+                startIcon={<DeleteRoundedIcon />}
+                onClick={onDelete}
+              >
+                Delete
+              </Button>
+            </>
+          )}
+        </Stack>
+
+        <Paper variant="outlined" sx={{ p: 3, mt: 2 }}>
+          {imgSrc && (
+            <Box
+              component="img"
+              src={imgSrc}
+              alt={item.title}
+              sx={{
+                width: "100%",
+                maxHeight: 360,
+                objectFit: "cover",
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "divider",
+                mb: 2,
+              }}
+            />
+          )}
+
+          <Typography variant="h6" sx={{ fontWeight: 900 }}>
+            {item.title}
+          </Typography>
+
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ mt: 1, flexWrap: "wrap", rowGap: 1 }}
+          >
+            <Chip label={item.category || "Uncategorised"} />
+            <Chip
+              variant="outlined"
+              label={item.itemCondition || "Condition: N/A"}
+            />
+            <Chip
+              label={item.status || "AVAILABLE"}
+              color="primary"
+              variant="outlined"
+            />
+          </Stack>
+
+          <Typography variant="body1" sx={{ mt: 2 }}>
+            {item.description}
+          </Typography>
+
+          <Divider sx={{ my: 2 }} />
+
+          <Typography variant="body2" color="text.secondary">
+            Owner: <strong>{item.owner?.displayName}</strong> (
+            {item.owner?.email})
+          </Typography>
+
+          {err && (
+            <Paper
+              variant="outlined"
+              sx={{
+                mt: 2,
+                p: 1.5,
+                bgcolor: "#FEF2F2",
+                borderColor: "#FECACA",
+                color: "#991B1B",
+              }}
             >
-              <Typography variant="h5">{item.title}</Typography>
-              <Chip
-                label={item.status}
-                color={item.status === "AVAILABLE" ? "primary" : "default"}
+              {err}
+            </Paper>
+          )}
+        </Paper>
+
+        <Box sx={{ mt: 2 }}>
+          <ChatBox itemId={item.id} />
+        </Box>
+      </Container>
+
+      {/* Edit dialog */}
+      <Dialog
+        open={openEdit}
+        onClose={() => setOpenEdit(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Edit item</DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Title"
+              value={form.title}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, title: e.target.value }))
+              }
+            />
+            <TextField
+              label="Description"
+              value={form.description}
+              multiline
+              rows={4}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, description: e.target.value }))
+              }
+            />
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <TextField
+                fullWidth
+                label="Category"
+                value={form.category}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, category: e.target.value }))
+                }
+              />
+              <TextField
+                fullWidth
+                label="Condition"
+                value={form.itemCondition}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, itemCondition: e.target.value }))
+                }
               />
             </Stack>
-
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {item.category || "Uncategorised"} • {item.condition || "N/A"}
-            </Typography>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Typography variant="subtitle2">Description</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {item.description || "No description provided."}
-            </Typography>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Typography variant="subtitle2">Donor</Typography>
-            <Typography variant="body2" color="text.secondary">
-              {item.owner?.displayName || "Unknown"}
-            </Typography>
-
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={1.5}
-              sx={{ mt: 2 }}
+            <TextField
+              select
+              label="Status"
+              value={form.status}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, status: e.target.value }))
+              }
             >
-              <Button
-                variant="contained"
-                startIcon={<ChatIcon />}
-                onClick={messageDonor}
-              >
-                Message donor
-              </Button>
-
-              {isOwner && (
-                <>
-                  <Button
-                    variant="outlined"
-                    startIcon={<EditIcon />}
-                    component={RouterLink}
-                    to={`/items/${item.id}/edit`}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    startIcon={<DeleteIcon />}
-                    onClick={() => setConfirmOpen(true)}
-                  >
-                    Delete
-                  </Button>
-                </>
-              )}
-            </Stack>
-          </CardContent>
-        </Card>
-      </Stack>
-
-      <ConfirmDialog
-        open={confirmOpen}
-        title="Delete listing?"
-        message="This will permanently remove the item listing."
-        confirmText="Delete"
-        onConfirm={deleteItem}
-        onClose={() => setConfirmOpen(false)}
-      />
+              <MenuItem value="AVAILABLE">AVAILABLE</MenuItem>
+              <MenuItem value="TAKEN">TAKEN</MenuItem>
+            </TextField>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setOpenEdit(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<SaveRoundedIcon />}
+            onClick={onSave}
+            disabled={saving}
+          >
+            {saving ? "Saving..." : "Save"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -9,24 +9,32 @@ import { io } from "socket.io-client";
 import { useAuth } from "./AuthContext";
 
 const SocketContext = createContext(null);
-export const useSocket = () => useContext(SocketContext);
 
 export function SocketProvider({ children }) {
-  const { sessionId } = useAuth();
+  const { token } = useAuth();
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    if (!sessionId) {
+    if (!token) {
+      if (socket) socket.disconnect();
       setSocket(null);
       return;
     }
-    const s = io(import.meta.env.VITE_SOCKET_URL, { auth: { sessionId } });
+
+    const s = io("http://localhost:4000", {
+      auth: { token }, // handshake auth
+    });
+
     setSocket(s);
     return () => s.disconnect();
-  }, [sessionId]);
+  }, [token]);
 
   const value = useMemo(() => ({ socket }), [socket]);
   return (
     <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
   );
+}
+
+export function useSocket() {
+  return useContext(SocketContext);
 }
