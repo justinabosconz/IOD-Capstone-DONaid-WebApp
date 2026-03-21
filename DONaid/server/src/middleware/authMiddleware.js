@@ -3,7 +3,7 @@ const { Session, User } = require("../models");
 async function requireAuth(req, res, next) {
   try {
     const auth = req.headers.authorization || "";
-    const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+    const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : null;
     if (!token) return res.status(401).json({ message: "Missing auth token" });
 
     const session = await Session.findOne({ where: { token }, include: User });

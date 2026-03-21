@@ -4,7 +4,9 @@
   "main": "server.js",
   "scripts": {
     "dev": "node src/server.js",
-    "test": "node --test"
+    "test": "set NODE_ENV=test&& jest --runInBand",
+    "test:watch": "set NODE_ENV=test&& jesr --watch",
+    "test:coverage": "set NODE_ENV=test&& jest --coverage --runInBand"
   },
   "author": "",
   "license": "ISC",
