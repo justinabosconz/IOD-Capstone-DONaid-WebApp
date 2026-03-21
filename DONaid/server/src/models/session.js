@@ -1,17 +1,10 @@
 const { DataTypes } = require("sequelize");
-const sequelize = require("../config/db");
 
-const Session = sequelize.define(
-  "Session",
-  {
-    id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-    },
+module.exports = (sequelize) => {
+  const Session = sequelize.define("Session", {
+    token: { type: DataTypes.STRING(128), allowNull: false, unique: true },
     expiresAt: { type: DataTypes.DATE, allowNull: false },
-  },
-  { timestamps: true },
-);
+  });
 
-module.exports = Session;
+  return Session;
+};

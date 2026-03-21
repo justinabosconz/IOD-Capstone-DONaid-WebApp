@@ -1,59 +1,44 @@
-const { Op } = require("sequelize");
-const { Chat, Message, Item, User } = require("../models");
+// chat.controller.js
+const { ChatMessage, User } = require("../models");
 
-function sortedPair(a, b) {
-  return a < b ? [a, b] : [b, a];
+async function listMessages(req, res) {
+  const { itemId } = req.params;
+
+  const messages = await ChatMessage.findAll({
+    where: { itemId },
+    include: [
+      {
+        model: User,
+        as: "fromUser",
+        attributes: ["id", "displayName", "email"],
+      },
+    ],
+    order: [["createdAt", "ASC"]],
+  });
+
+  res.json(messages);
 }
 
-exports.createOrGetChat = async (req, res, next) => {
+async function createMessage(req, res) {
   try {
-    const { itemId, otherUserId } = req.body;
-    if (!itemId || !otherUserId)
-      return res.status(400).json({ message: "Missing fields" });
-    const [userAId, userBId] = sortedPair(req.user.id, Number(otherUserId));
+    const { itemId } = req.params;
+    const { body } = req.body;
 
-    let chat = await Chat.findOne({ where: { itemId, userAId, userBId } });
-    if (!chat) chat = await Chat.create({ itemId, userAId, userBId });
+    if (!body)
+      return res.status(400).json({ message: "Message body required" });
 
-    res.status(201).json(chat);
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.listMyChats = async (req, res, next) => {
-  try {
-    const myId = req.user.id;
-    const chats = await Chat.findAll({
-      where: { [Op.or]: [{ userAId: myId }, { userBId: myId }] },
-      include: [
-        {
-          model: Item,
-          include: [
-            { model: User, as: "owner", attributes: ["id", "displayName"] },
-          ],
-        },
-      ],
-      order: [["updatedAt", "DESC"]],
+    const msg = await ChatMessage.create({
+      itemId,
+      fromUserId: req.user.id,
+      body,
     });
-    res.json(chats);
-  } catch (err) {
-    next(err);
-  }
-};
 
-exports.getMessages = async (req, res, next) => {
-  try {
-    const chatId = req.params.id;
-    const messages = await Message.findAll({
-      where: { chatId },
-      include: [
-        { model: User, as: "sender", attributes: ["id", "displayName"] },
-      ],
-      order: [["createdAt", "ASC"]],
-    });
-    res.json(messages);
+    res.status(201).json(msg);
   } catch (err) {
-    next(err);
+    res
+      .status(500)
+      .json({ message: "Create message failed", error: err.message });
   }
-};
+}
+
+module.exports = { listMessages, createMessage };

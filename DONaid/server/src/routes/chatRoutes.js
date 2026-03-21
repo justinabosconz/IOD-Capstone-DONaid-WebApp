@@ -1,9 +1,11 @@
 const router = require("express").Router();
-const chats = require("../controllers/chatController");
-const requireSession = require("../middleware/requireSession");
+const {
+  listMessages,
+  createMessage,
+} = require("../controllers/chatController");
+const { requireAuth } = require("../middleware/authMiddleware");
 
-router.post("/", requireSession, chats.createOrGetChat);
-router.get("/", requireSession, chats.listMyChats);
-router.get("/:id/messages", requireSession, chats.getMessages);
+router.get("/:itemId/messages", requireAuth, listMessages);
+router.post("/:itemId/messages", requireAuth, createMessage);
 
 module.exports = router;

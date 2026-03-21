@@ -1,21 +1,18 @@
 const { DataTypes } = require("sequelize");
-const sequelize = require("../config/db");
 
-const Item = sequelize.define(
-  "Item",
-  {
+module.exports = (sequelize) => {
+  const Item = sequelize.define("Item", {
     title: { type: DataTypes.STRING(120), allowNull: false },
-    description: { type: DataTypes.STRING(1000) },
-    category: { type: DataTypes.STRING(60) },
-    condition: { type: DataTypes.STRING(60) },
-    imageUrl: { type: DataTypes.STRING(400) },
+    description: { type: DataTypes.TEXT, allowNull: false },
+    category: { type: DataTypes.STRING(60), allowNull: true },
+    itemCondition: { type: DataTypes.STRING(60), allowNull: true },
+    imagePath: { type: DataTypes.STRING(255), allowNull: true }, // saved filename path
     status: {
-      type: DataTypes.STRING(20),
+      type: DataTypes.STRING(30),
       allowNull: false,
       defaultValue: "AVAILABLE",
     },
-  },
-  { timestamps: true },
-);
+  });
 
-module.exports = Item;
+  return Item;
+};

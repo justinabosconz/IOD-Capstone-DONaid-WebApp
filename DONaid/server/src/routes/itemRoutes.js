@@ -1,11 +1,17 @@
 const router = require("express").Router();
-const items = require("../controllers/itemController");
-const requireSession = require("../middleware/requireSession");
+const {
+  listItems,
+  getItem,
+  createItem,
+  updateItem,
+  deleteItem,
+} = require("../controllers/itemController");
+const { requireAuth } = require("../middleware/authMiddleware");
 
-router.get("/", items.listAvailable);
-router.get("/:id", items.getOne);
-router.post("/", requireSession, items.create);
-router.put("/:id", requireSession, items.update);
-router.delete("/:id", requireSession, items.remove);
+router.get("/", listItems);
+router.get("/:id", getItem);
+router.post("/", requireAuth, createItem);
+router.put("/:id", requireAuth, updateItem);
+router.delete("/:id", requireAuth, deleteItem);
 
 module.exports = router;

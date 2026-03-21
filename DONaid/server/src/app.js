@@ -1,24 +1,31 @@
 const express = require("express");
-const cors = require("cors");
+const path = require("path");
+require("dotenv").config();
+
+const { corsMiddleware } = require("./middleware/corsMiddleware");
 
 const authRoutes = require("./routes/authRoutes");
-const itemRoutes = require("./routes/itemRoutes");
-const chatRoutes = require("./routes/chatRoutes");
+const itemsRoutes = require("./routes/itemRoutes");
+const chatRoutes = require("./routes//chatRoutes");
 
 const app = express();
 
+// JSON payload (increase limit for base64 images)
+app.use(express.json({ limit: "8mb" }));
+app.use(corsMiddleware);
+
+// Serve uploaded images
 app.use(
-  cors({
-    origin: process.env.CLIENT_ORIGIN,
-    exposedHeaders: ["X-Session-Id"],
-  }),
+  "/uploads",
+  express.static(path.join(process.cwd(), process.env.UPLOAD_DIR || "uploads")),
 );
-app.use(express.json({ limit: "1mb" }));
 
+// API routes
 app.use("/api/auth", authRoutes);
-app.use("/api/items", itemRoutes);
-app.use("/api/chats", chatRoutes);
+app.use("/api/items", itemsRoutes);
+app.use("/api/chat", chatRoutes);
 
-app.get("/health", (req, res) => res.json({ ok: true }));
+// Health check
+app.get("/api/health", (req, res) => res.json({ ok: true }));
 
-module.exports = app;
+module.exports = { app };

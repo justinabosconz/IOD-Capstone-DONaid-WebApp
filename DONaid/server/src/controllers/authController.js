@@ -1,57 +1,85 @@
-const bcrypt = require("bcrypt");
-const { User } = require("../models");
-const { createSession, deleteSession } = require("../services/sessionService");
+const crypto = require("crypto");
+const { User, Session } = require("../models");
+const { hashPassword, verifyPassword } = require("../utility/password");
 
-const SALT_ROUNDS = 10;
+function makeToken() {
+  return crypto.randomBytes(32).toString("hex");
+}
 
-exports.register = async (req, res, next) => {
+function addDays(date, days) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+async function register(req, res) {
   try {
-    const { displayName, email, password } = req.body;
-    if (!displayName || !email || !password) {
-      return res.status(400).json({ message: "Missing fields" });
+    const { email, displayName, password } = req.body;
+
+    if (!email || !displayName || !password) {
+      return res
+        .status(400)
+        .json({ message: "email, displayName, password are required" });
     }
 
-    const exists = await User.findOne({ where: { email } });
-    if (exists) return res.status(409).json({ message: "Email already used" });
+    const existing = await User.findOne({ where: { email } });
+    if (existing)
+      return res.status(409).json({ message: "Email already registered" });
 
-    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-    const user = await User.create({ displayName, email, passwordHash });
+    const passwordHash = hashPassword(password);
+    const user = await User.create({ email, displayName, passwordHash });
 
-    const session = await createSession(user.id);
-    res.status(201).json({
-      user: { id: user.id, displayName: user.displayName, email: user.email },
-      sessionId: session.id,
-    });
+    res
+      .status(201)
+      .json({ id: user.id, email: user.email, displayName: user.displayName });
   } catch (err) {
-    next(err);
+    res.status(500).json({ message: "Register failed", error: err.message });
   }
-};
+}
 
-exports.login = async (req, res, next) => {
+async function login(req, res) {
   try {
     const { email, password } = req.body;
+    if (!email || !password)
+      return res.status(400).json({ message: "email and password required" });
+
     const user = await User.findOne({ where: { email } });
     if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
-    const ok = await bcrypt.compare(password, user.passwordHash);
+    const ok = verifyPassword(password, user.passwordHash);
     if (!ok) return res.status(401).json({ message: "Invalid credentials" });
 
-    const session = await createSession(user.id);
+    const token = makeToken();
+    const days = Number(process.env.SESSION_DAYS || 7);
+    const expiresAt = addDays(new Date(), days);
+
+    await Session.create({ token, userId: user.id, expiresAt });
+
     res.json({
-      user: { id: user.id, displayName: user.displayName, email: user.email },
-      sessionId: session.id,
+      token,
+      user: { id: user.id, email: user.email, displayName: user.displayName },
+      expiresAt,
     });
   } catch (err) {
-    next(err);
+    res.status(500).json({ message: "Login failed", error: err.message });
   }
-};
+}
 
-exports.logout = async (req, res, next) => {
+async function me(req, res) {
+  res.json({
+    id: req.user.id,
+    email: req.user.email,
+    displayName: req.user.displayName,
+  });
+}
+
+async function logout(req, res) {
   try {
-    const sessionId = req.header("X-Session-Id");
-    await deleteSession(sessionId);
+    await Session.destroy({ where: { token: req.token } });
     res.json({ message: "Logged out" });
   } catch (err) {
-    next(err);
+    res.status(500).json({ message: "Logout failed", error: err.message });
   }
-};
+}
+
+module.exports = { register, login, me, logout };

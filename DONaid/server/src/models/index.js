@@ -1,29 +1,28 @@
-const User = require("./user");
-const Item = require("./item");
-const Chat = require("./chat");
-const Message = require("./message");
-const Session = require("./session");
+// Loading all models in one place
 
-// Users <-> Items
-User.hasMany(Item, { foreignKey: "ownerUserId" });
-Item.belongsTo(User, { foreignKey: "ownerUserId", as: "owner" });
+const { sequelize } = require("../dbConnect");
 
-// Sessions
-User.hasMany(Session, { foreignKey: "userId" });
+const UserFactory = require("./user");
+const SessionFactory = require("./session");
+const ItemFactory = require("./item");
+const ChatMessageFactory = require("./chatMessage");
+
+const User = UserFactory(sequelize);
+const Session = SessionFactory(sequelize);
+const Item = ItemFactory(sequelize);
+const ChatMessage = ChatMessageFactory(sequelize);
+
+// Associations (relationships)
+User.hasMany(Item, { foreignKey: "ownerId", onDelete: "CASCADE" });
+Item.belongsTo(User, { foreignKey: "ownerId", as: "owner" });
+
+User.hasMany(Session, { foreignKey: "userId", onDelete: "CASCADE" });
 Session.belongsTo(User, { foreignKey: "userId" });
 
-// Chats
-Item.hasMany(Chat, { foreignKey: "itemId" });
-Chat.belongsTo(Item, { foreignKey: "itemId" });
+Item.hasMany(ChatMessage, { foreignKey: "itemId", onDelete: "CASCADE" });
+ChatMessage.belongsTo(Item, { foreignKey: "itemId" });
 
-User.hasMany(Chat, { foreignKey: "userAId", as: "chatsAsA" });
-User.hasMany(Chat, { foreignKey: "userBId", as: "chatsAsB" });
+User.hasMany(ChatMessage, { foreignKey: "fromUserId", onDelete: "CASCADE" });
+ChatMessage.belongsTo(User, { foreignKey: "fromUserId", as: "fromUser" });
 
-// Messages
-Chat.hasMany(Message, { foreignKey: "chatId" });
-Message.belongsTo(Chat, { foreignKey: "chatId" });
-
-User.hasMany(Message, { foreignKey: "senderUserId" });
-Message.belongsTo(User, { foreignKey: "senderUserId", as: "sender" });
-
-module.exports = { User, Item, Chat, Message, Session };
+module.exports = { sequelize, User, Session, Item, ChatMessage };

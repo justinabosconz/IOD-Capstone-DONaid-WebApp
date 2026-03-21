@@ -1,12 +1,30 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/db");
+const { DataTypes, Model } = require("sequelize");
+let dbConnect = require("../dbConnect");
+const sequelizeInstance = dbConnect.Sequelize;
 
-const Message = sequelize.define(
-  "Message",
+// creating the message class
+class Message extends Model {}
+
+Message.init(
   {
-    content: { type: DataTypes.STRING(2000), allowNull: false },
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true, // PRIMARY KEY
+    },
+    content: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
   },
-  { timestamps: true },
+  {
+    sequelize: sequelizeInstance,
+    modelName: "messages",
+    timestamps: true,
+    freezeTableName: true,
+  },
 );
 
+//exporting message model
 module.exports = Message;

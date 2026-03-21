@@ -1,89 +1,91 @@
+// items.controller.js
+const path = require("path");
 const { Item, User } = require("../models");
+const { saveDataUrlImage } = require("../utility/fileUpload");
 
-exports.listAvailable = async (req, res, next) => {
-  try {
-    const items = await Item.findAll({
-      where: { status: "AVAILABLE" },
-      include: [
-        { model: User, as: "owner", attributes: ["id", "displayName"] },
-      ],
-      order: [["createdAt", "DESC"]],
-    });
-    res.json(items);
-  } catch (err) {
-    next(err);
-  }
-};
+async function listItems(req, res) {
+  const items = await Item.findAll({
+    include: [
+      { model: User, as: "owner", attributes: ["id", "displayName", "email"] },
+    ],
+    order: [["createdAt", "DESC"]],
+  });
+  res.json(items);
+}
 
-exports.getOne = async (req, res, next) => {
-  try {
-    const item = await Item.findByPk(req.params.id, {
-      include: [
-        { model: User, as: "owner", attributes: ["id", "displayName"] },
-      ],
-    });
-    if (!item) return res.status(404).json({ message: "Not found" });
-    res.json(item);
-  } catch (err) {
-    next(err);
-  }
-};
+async function getItem(req, res) {
+  const item = await Item.findByPk(req.params.id, {
+    include: [
+      { model: User, as: "owner", attributes: ["id", "displayName", "email"] },
+    ],
+  });
+  if (!item) return res.status(404).json({ message: "Item not found" });
+  res.json(item);
+}
 
-exports.create = async (req, res, next) => {
+async function createItem(req, res) {
   try {
-    const { title, description, category, condition, imageUrl } = req.body;
-    if (!title) return res.status(400).json({ message: "Title required" });
+    const { title, description, category, itemCondition, imageDataUrl } =
+      req.body;
+    if (!title || !description)
+      return res
+        .status(400)
+        .json({ message: "title and description required" });
+
+    const uploadRoot = path.join(
+      process.cwd(),
+      process.env.UPLOAD_DIR || "uploads",
+    );
+    const fileName = imageDataUrl
+      ? saveDataUrlImage(imageDataUrl, uploadRoot)
+      : null;
 
     const item = await Item.create({
-      ownerUserId: req.user.id,
+      ownerId: req.user.id,
       title,
       description,
-      category,
-      condition,
-      imageUrl,
+      category: category || null,
+      itemCondition: itemCondition || null,
+      imagePath: fileName,
     });
+
     res.status(201).json(item);
   } catch (err) {
-    next(err);
+    res.status(500).json({ message: "Create item failed", error: err.message });
   }
-};
+}
 
-exports.update = async (req, res, next) => {
+async function updateItem(req, res) {
   try {
     const item = await Item.findByPk(req.params.id);
-    if (!item) return res.status(404).json({ message: "Not found" });
-    if (item.ownerUserId !== req.user.id)
-      return res.status(403).json({ message: "Forbidden" });
+    if (!item) return res.status(404).json({ message: "Item not found" });
+    if (item.ownerId !== req.user.id)
+      return res.status(403).json({ message: "Not allowed" });
 
-    const fields = [
-      "title",
-      "description",
-      "category",
-      "condition",
-      "imageUrl",
-      "status",
-    ];
-    fields.forEach((f) => {
-      if (req.body[f] !== undefined) item[f] = req.body[f];
+    const { title, description, category, itemCondition, status } = req.body;
+
+    await item.update({
+      title: title ?? item.title,
+      description: description ?? item.description,
+      category: category ?? item.category,
+      itemCondition: itemCondition ?? item.itemCondition,
+      status: status ?? item.status,
     });
 
-    await item.save();
     res.json(item);
   } catch (err) {
-    next(err);
+    res.status(500).json({ message: "Update item failed", error: err.message });
   }
-};
+}
 
-exports.remove = async (req, res, next) => {
-  try {
-    const item = await Item.findByPk(req.params.id);
-    if (!item) return res.status(404).json({ message: "Not found" });
-    if (item.ownerUserId !== req.user.id)
-      return res.status(403).json({ message: "Forbidden" });
+async function deleteItem(req, res) {
+  const item = await Item.findByPk(req.params.id);
+  if (!item) return res.status(404).json({ message: "Item not found" });
+  if (item.ownerId !== req.user.id)
+    return res.status(403).json({ message: "Not allowed" });
 
-    await item.destroy();
-    res.json({ message: "Deleted" });
-  } catch (err) {
-    next(err);
-  }
-};
+  await item.destroy();
+  res.json({ message: "Item deleted" });
+}
+
+module.exports = { listItems, getItem, createItem, updateItem, deleteItem };
