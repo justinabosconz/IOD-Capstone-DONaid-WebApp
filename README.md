@@ -1,76 +1,88 @@
-DONaid – Donation Marketplace (Capstone Project)
-DONaid is a full‑stack web application where users can register/login, post items for donation (with photos), browse and filter items, and message item owners in real time using Socket.IO.
+🌱 DONaid — Community Donation Platform
+DONaid is a full‑stack web application designed to make giving easier. Users can upload items they want to donate, browse available items, and connect with others in their community. Built as a capstone project, DONaid focuses on simplicity, accessibility, and meaningful impact.
 
 ✨ Features
-✅ Register & Login (session tokens stored in DB)
-✅ Create donation item listings (CRUD)
-✅ Upload an item photo (stored on server in /uploads)
-✅ Browse items with:  Category filter | Text search | “All items” / “My items” toggle
-✅ View item detail (photo, description, owner)
-✅ Owner-only edit/delete controls
-✅ Real-time chat per item (Socket.IO rooms)
-✅ Automated API testing (Jest + Supertest) + coverage report
 
-🧰 Tech Stack
+🧑‍🤝‍🧑 User Accounts
 
-Frontend
-  React (Vite)
-  Material UI (MUI)
-  Context API (Auth, Items, Socket)
+- Secure user registration and login
+- Session-based authentication
+- Profile management
 
-Backend
-  Node.js + Express (MVC)
-  Sequelize ORM
-  MySQL (localhost:3306)
-  Socket.IO (real-time messaging)
+  🎁 Donation Items
 
-Testing
-  Jest + Supertest (API tests + coverage)
+- Upload items with images, descriptions, and categories
+- Search and filter items
+- View item details
+- Mark items as available/unavailable
+
+  💬 Real-Time Communication
+
+- WebSocket-powered messaging between donors and recipients
+- Live updates for chat and item status
+
+  🗄️ Database-Driven
+
+- SQL database managed through Sequelize ORM
+- Structured tables for Users, Items, Sessions, and Chat Messages
+
+🏗️ Tech Stack
+
+| Layer     | Technology                      |
+| --------- | ------------------------------- |
+| Frontend  | React (Vite), Material UI (MUI) |
+| Backend   | Node.js + Express (MVC)         |
+| Database  | MySQL + Sequelize ORM           |
+| Real-Time | Socket.IO (real-time messaging) |
+| Testing   | Jest + Supertest                |
 
 📁 Project Structure
+
 DONaid/
-  server/
-    src/
-      app.js
-      server.js
-      config/
-      controllers/
-      middleware/
-      models/
-      routes/
-      utils/
-    uploads/
-    tests/
-    jest.config.js
-    .env
-    .env.test
-  client/
-    src/
-      api/
-      components/
-      context/
-      pages/
-      theme.js
-    .env
+│── server/src
+│ ├── app.js
+│ ├── server.js
+│ ├── dbConnect.js
+│ ├── controllers/
+│ ├── middleware/
+│ ├── models/
+│ ├── routes/
+│ ├── services/
+│ ├── sockets/
+│ ├── utility/
+│ ├── tests/
+│ ├── .env
+│ ├── .env.test│
+|
+│── client/
+│ ├── src/
+│ ├── api/
+│ ├── components/
+│ ├── context/
+│ ├── pages/
+│ ├── .env
+│
+└── README.md (this file)
 
 ✅ Prerequisites
 Node.js
 MySQL Server running locally
 
 ▶️ Install & Run (Development)
-1) Start Backend (Express + MySQL)
-Shellcd servernpm installnpm run devShow more lines
-Expected output includes:
+
+1. Start Backend (Express + MySQL)
+   Shellcd servernpm installnpm run devShow more lines
+   Expected output includes:
 
 Server running on http://localhost:4000
 DB authenticated
 DB synced
 
-2) Start Frontend (Vite + React)
-Shellcd clientnpm installnpm run devShow more lines
-Open:
-Frontend: http://localhost:5173
-Backend health check: http://localhost:4000/api/health
+2. Start Frontend (Vite + React)
+   Shellcd clientnpm installnpm run devShow more lines
+   Open:
+   Frontend: http://localhost:5173
+   Backend health check: http://localhost:4000/api/health
 
 🧪 Testing (Jest + Supertest)
 Install test dependencies (server)
@@ -118,31 +130,19 @@ Item photos are uploaded from the client as base64 data URLs
 Server saves images into: server/uploads/
 Images are served via: http://localhost:4000/uploads/<filename>
 
+🤝 Contributing
+Contributions are welcome!
+Feel free to open issues or submit pull requests.
 
-🧠 Common Troubleshooting
-“Failed to fetch” on login
+📜 License
+This project currently has no license.
+You may add one (MIT recommended).
 
-Backend isn’t running. Start it:
-Shellcd servernpm run devShow more lines
+💛 Acknowledgements
 
-
-401 “Missing auth token” / “Invalid token”
-
-Ensure the frontend sends:
-Authorization: Bearer <token>
-Log out then log back in (clears stale tokens)
-Confirm server/.env SESSION_DAYS and DB sessions table exists
-
-Can’t delete/update item
-
-Only the owner can edit/delete their item.
-Log in with the same user who created the item.
-
-Vite plugin dependency error
-
-Align Vite and @vitejs/plugin-react versions:
-Shellnpm install -D @vitejs/plugin-react@latestShow more lines
-
+- Built as part of the IOD Capstone
+- Inspired by community-driven generosity
+- Thanks to everyone who supported the development journey
 
 👩‍💻 Author
 Justina Bosco
