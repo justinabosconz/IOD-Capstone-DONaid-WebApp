@@ -1,9 +1,7 @@
-// client/src/pages/ItemsPage.jsx
 import React, { useMemo, useState } from "react";
 import {
   Box,
   Container,
-  Grid,
   Paper,
   Typography,
   TextField,
@@ -14,7 +12,9 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Divider,
+  Grid,
 } from "@mui/material";
+
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded";
 import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
@@ -31,25 +31,17 @@ export default function ItemsPage({ onView }) {
   // Filters
   const [category, setCategory] = useState("All");
   const [query, setQuery] = useState("");
-  const [scope, setScope] = useState("all"); // "all" | "mine"
+  const [scope, setScope] = useState("all"); // all | mine
 
-  // ✅ Sizing styles: bigger tap targets for easier clicking
+  // Bigger click targets
   const bigControlSx = {
-    "& .MuiInputBase-root": {
-      minHeight: 52,
-      fontSize: 16,
-    },
-    "& .MuiInputBase-input": {
-      padding: "14px 14px",
-    },
+    "& .MuiInputBase-root": { minHeight: 52, fontSize: 16 },
+    "& .MuiInputBase-input": { padding: "14px 14px" },
   };
 
   const bigAutoCompleteSx = {
     ...bigControlSx,
-    "& .MuiOutlinedInput-root": {
-      paddingTop: "2px",
-      paddingBottom: "2px",
-    },
+    "& .MuiOutlinedInput-root": { paddingTop: "2px", paddingBottom: "2px" },
   };
 
   const bigToggleSx = {
@@ -63,7 +55,7 @@ export default function ItemsPage({ onView }) {
     },
   };
 
-  // Build category options from current items
+  // Category options from items
   const categories = useMemo(() => {
     const set = new Set();
     items.forEach((i) => {
@@ -73,7 +65,7 @@ export default function ItemsPage({ onView }) {
     return ["All", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
   }, [items]);
 
-  // Filter items with scope + category + query
+  // Filter items
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
 
@@ -104,18 +96,27 @@ export default function ItemsPage({ onView }) {
           Filter on the left. Click an item to view details and chat.
         </Typography>
 
-        <Grid container spacing={2}>
-          {/* ✅ LEFT SIDEBAR FILTERS */}
-          <Grid item xs={12} md={4} lg={3}>
-            <Paper
-              variant="outlined"
-              sx={{ p: 2.25, position: "sticky", top: 88 }}
-            >
+        {/* ✅ FLEX LAYOUT: Sidebar left, Items right */}
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={2}
+          alignItems="flex-start"
+        >
+          {/* ✅ LEFT SIDEBAR */}
+          <Box
+            sx={{
+              width: { xs: "100%", md: 360 }, // fixed sidebar width on desktop
+              flexShrink: 0,
+              position: { md: "sticky" },
+              top: { md: 88 }, // adjust if your AppBar height changes
+              alignSelf: "flex-start",
+            }}
+          >
+            <Paper variant="outlined" sx={{ p: 2.25 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 900, mb: 1 }}>
                 Filters
               </Typography>
 
-              {/* Scope toggle */}
               <Typography
                 variant="caption"
                 color="text.secondary"
@@ -123,6 +124,7 @@ export default function ItemsPage({ onView }) {
               >
                 Show
               </Typography>
+
               <ToggleButtonGroup
                 value={scope}
                 exclusive
@@ -148,7 +150,6 @@ export default function ItemsPage({ onView }) {
 
               <Divider sx={{ my: 2 }} />
 
-              {/* Category */}
               <Typography
                 variant="caption"
                 color="text.secondary"
@@ -156,6 +157,7 @@ export default function ItemsPage({ onView }) {
               >
                 Category
               </Typography>
+
               <Autocomplete
                 options={categories}
                 value={category}
@@ -182,7 +184,6 @@ export default function ItemsPage({ onView }) {
 
               <Divider sx={{ my: 2 }} />
 
-              {/* Search */}
               <Typography
                 variant="caption"
                 color="text.secondary"
@@ -190,6 +191,7 @@ export default function ItemsPage({ onView }) {
               >
                 Search
               </Typography>
+
               <TextField
                 fullWidth
                 label="Search items"
@@ -206,7 +208,6 @@ export default function ItemsPage({ onView }) {
                 }}
               />
 
-              {/* Active filter chips */}
               <Stack
                 direction="row"
                 spacing={1}
@@ -229,10 +230,10 @@ export default function ItemsPage({ onView }) {
                 <Chip label={`${filtered.length} result(s)`} color="primary" />
               </Stack>
             </Paper>
-          </Grid>
+          </Box>
 
-          {/* ✅ RIGHT CONTENT: ITEMS GRID */}
-          <Grid item xs={12} md={8} lg={9}>
+          {/* ✅ RIGHT CONTENT AREA */}
+          <Box sx={{ flexGrow: 1, width: "100%" }}>
             <Grid container spacing={2}>
               {loadingItems ? (
                 <Grid item xs={12}>
@@ -261,8 +262,8 @@ export default function ItemsPage({ onView }) {
                 </Grid>
               )}
             </Grid>
-          </Grid>
-        </Grid>
+          </Box>
+        </Stack>
       </Container>
     </Box>
   );
