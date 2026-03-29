@@ -1,4 +1,3 @@
-// client/src/pages/AddItemPage.jsx
 import React, { useState } from "react";
 import {
   Box,
@@ -31,7 +30,6 @@ export default function AddItemPage({ onDone }) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Basic size limit guard (avoid 413 payload)
     if (file.size > 3 * 1024 * 1024) {
       setErr("Image is too large. Please choose a file under 3MB.");
       return;

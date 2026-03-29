@@ -1,4 +1,3 @@
-// chat.controller.js
 const { ChatMessage, User } = require("../models");
 
 async function listMessages(req, res) {

@@ -45,10 +45,10 @@ export default function ItemDetailPage({ itemId, onBack }) {
     status: "AVAILABLE",
   });
 
-  // ✅ Anchor at top of the page (we will scroll to this with an offset)
+  // Anchor at top of the page (we will scroll to this with an offset)
   const topRef = useRef(null);
 
-  // ✅ Load item data
+  // Load item data
   useEffect(() => {
     let cancelled = false;
 
@@ -77,8 +77,8 @@ export default function ItemDetailPage({ itemId, onBack }) {
     };
   }, [itemId]);
 
-  // ✅ Bulletproof scroll: always bring the top (Back button) into view
-  //    while accounting for sticky AppBar height.
+  // Bulletproof scroll: always bring the top (Back button) into view
+
   useEffect(() => {
     // Run after render
     const t = setTimeout(() => {
@@ -183,7 +183,7 @@ export default function ItemDetailPage({ itemId, onBack }) {
 
   return (
     <Box sx={{ py: 3 }}>
-      {/* ✅ Top anchor so we always scroll to where buttons are visible */}
+      {/* Top anchor so we always scroll to where buttons are visible */}
       <div ref={topRef} />
 
       <Container maxWidth="md" sx={{ pt: 1 }}>

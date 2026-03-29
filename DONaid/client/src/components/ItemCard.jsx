@@ -1,4 +1,3 @@
-// client/src/components/ItemCard.jsx
 import React from "react";
 import {
   Card,

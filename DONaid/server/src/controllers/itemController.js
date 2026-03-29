@@ -1,4 +1,3 @@
-// items.controller.js
 const path = require("path");
 const { Item, User } = require("../models");
 const { saveDataUrlImage } = require("../utility/fileUpload");

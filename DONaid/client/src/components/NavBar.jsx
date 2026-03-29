@@ -1,4 +1,3 @@
-// client/src/components/NavBar.jsx
 import React from "react";
 import { AppBar, Toolbar, Typography, Button, Box, Chip } from "@mui/material";
 import VolunteerActivismRoundedIcon from "@mui/icons-material/VolunteerActivismRounded";

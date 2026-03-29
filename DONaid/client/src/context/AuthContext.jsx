@@ -1,4 +1,3 @@
-// client/src/context/AuthContext.jsx
 import React, {
   createContext,
   useContext,
@@ -18,12 +17,12 @@ const AuthContext = createContext(null);
  * - Exposes login/register/logout
  */
 export function AuthProvider({ children }) {
-  // ✅ Load token from localStorage once
+  // Load token from localStorage once
   const [token, setToken] = useState(() => localStorage.getItem("token"));
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ On token change (or first load), fetch current user
+  // On token change (or first load), fetch current user
   useEffect(() => {
     let cancelled = false;
 
@@ -62,7 +61,7 @@ export function AuthProvider({ children }) {
     };
   }, [token]);
 
-  // ✅ Login: overwrite token and user every time
+  //  Login: overwrite token and user every time
   async function login(email, password) {
     const data = await api.login({ email, password });
 
@@ -72,13 +71,13 @@ export function AuthProvider({ children }) {
     setUser(data.user);
   }
 
-  // ✅ Register then login
+  //  Register then login
   async function register(displayName, email, password) {
     await api.register({ displayName, email, password });
     await login(email, password);
   }
 
-  // ✅ Logout: remove token + clear session
+  //  Logout: remove token + clear session
   async function logout() {
     try {
       if (token) await api.logout(token);
@@ -96,7 +95,7 @@ export function AuthProvider({ children }) {
     [token, user, loading],
   );
 
-  // ✅ This return MUST be inside the AuthProvider function
+  // This return MUST be inside the AuthProvider function
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
